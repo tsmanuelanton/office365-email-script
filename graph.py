@@ -17,18 +17,19 @@ def initialize_graph_for_user_auth(config):
         credential=this.device_code_credential, scopes=graph_scopes)
 
 
-def get_user_token():
-    access_token = this.device_code_credential.get_token(
-        this.settings['graphUserScopes'])
-    return access_token.token
-
-
-def get_inbox():
-    endpoint = '/me/mailFolders/inbox/messages'
-    # Solo obtener estos campos específicos
-    select = 'from,isRead,receivedDateTime,subject'
-    # Obtener un máximo de 25 resultados
-    top = 25
-    request_url = f'{endpoint}?$select={select}&$top={top}'
+def get_emails_with_attachments():
+    '''Obtiene los IDs de aquellos correos que tengan archivos adjuntos'''
+    endpoint = '/me/messages'
+    # Solo obtener el campo id
+    select = 'id'
+    request_url = f'{endpoint}?$filter=hasAttachments eq true&$select={select}'
     inbox_response = this.user_client.get(request_url)
     return inbox_response.json()
+
+
+def get_attchments(id_email):
+    '''Obtiene los archivos adjuntos del email con id pasado por parámetros'''
+    endpoint = f'/me/messages/{id_email}/attachments'
+    request_url = f'{endpoint}'
+    response = this.user_client.get(request_url)
+    return response.json()

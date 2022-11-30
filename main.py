@@ -1,9 +1,7 @@
 
 import graph
 import json
-import warnings
-warnings.filterwarnings(
-    action='ignore', module='.*azure.*')
+import base64
 
 try:
     config = json.load(open("config.json", "r"))
@@ -13,24 +11,19 @@ except FileNotFoundError as e:
 
 
 def main():
+    # Autenticar usuario
     graph.initialize_graph_for_user_auth(config)
 
-    list_inbox()
+    emails = graph.get_emails_with_attachments()
 
+    for email in emails["value"]:
 
-def list_inbox():
-    message_page = graph.get_inbox()
-
-    # Output each message's details
-    for message in message_page['value']:
-        print('Message:', message['subject'])
-        print('  From:', message['from']['emailAddress']['name'])
-        print('  Status:', 'Read' if message['isRead'] else 'Unread')
-        print('  Received:', message['receivedDateTime'])
-
-    # If @odata.nextLink is present
-    more_available = '@odata.nextLink' in message_page
-    print('\nMore messages available?', more_available, '\n')
+        attachments = graph.get_attchments(email["id"])
+        for attachment in attachments["value"]:
+            f = open(attachment["name"], "wb")
+            data_base64 = attachment["contentBytes"]
+            f.write(base64.b64decode(data_base64))
+            f.close()
 
 
 main()
