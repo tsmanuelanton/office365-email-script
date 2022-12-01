@@ -17,12 +17,18 @@ def initialize_graph_for_user_auth(config):
         credential=this.device_code_credential, scopes=graph_scopes)
 
 
-def get_emails_with_attachments():
+def get_emails_with_attachments(filterRecivedTime):
     '''Obtiene los IDs de aquellos correos que tengan archivos adjuntos'''
     endpoint = '/me/messages'
+
+    filter = "hasAttachments eq true"
+
+    if filterRecivedTime != None:
+        filter += f" AND receivedDateTime ge {filterRecivedTime}"
+
     # Solo obtener el campo id
     select = 'id'
-    request_url = f'{endpoint}?$filter=hasAttachments eq true&$select={select}'
+    request_url = f'{endpoint}?$filter={filter}&$select={select}'
     inbox_response = this.user_client.get(request_url)
     return inbox_response.json()
 
