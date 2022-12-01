@@ -27,6 +27,10 @@ def main():
     if last_time != None:
         filterRecivedTime = last_time.strftime(
             '%Y-%m-%dT%H:%M:%SZ')
+        print(f"Recuperando archivos adjuntos desde {filterRecivedTime}")
+
+    else:
+        print(f"Recuperando archivos adjuntos desde el principio")
 
     # Obtenemos el id de los correos que tengan archivos adjuntos
     emails = graph.get_emails_with_attachments(filterRecivedTime)
@@ -38,7 +42,7 @@ def main():
     # Creamos el directorio donde se van a almacenar los archivos adjuntos
     now = datetime.now()
     date_time = now.strftime("%d-%m-%Y_%H-%M")
-    directory_path = f"{attachmentsDir}/{date_time}"
+    directory_path = f"{attachmentsDir}\\{date_time}"
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
 
@@ -49,7 +53,7 @@ def main():
             # Si no es un archivo (fileAttachment), lo ignormaos
             if attachment["@odata.type"] == "#microsoft.graph.fileAttachment":
                 file_name = f'{attachment["name"]}'
-                f = open(f"{directory_path}/{file_name}", "wb")
+                f = open(f"{directory_path}\\{file_name}", "wb")
                 data_base64 = attachment["contentBytes"]
                 f.write(base64.b64decode(data_base64))
                 f.close()
@@ -57,18 +61,26 @@ def main():
 
 def get_last_time_executed():
     ''' Devuelve un datetime con la última vez que se descargaron ficheros adjuntos'''
-    all_subdirs = [d for d in os.listdir(
-        attachmentsDir) if os.path.isdir(f'{attachmentsDir}/{d}')]
 
-    if len(all_subdirs) == 0:
+    try:
+        # Recupera todos los subdirectorios donde almacenamos los archivos adjuntos
+        all_subdirs = [d for d in os.listdir(
+            attachmentsDir) if os.path.isdir(f'{attachmentsDir}\\{d}')]
+
+        if len(all_subdirs) == 0:
+            return None
+
+        def str2ms(str):
+            '''Función auxiliar que convierte una fecha en str a mirosegundos'''
+            return datetime.strptime(str, '%d-%m-%Y_%H-%M').timestamp()
+
+        # Recorremos todos los subdirectorios buscando la carpeta más reciente
+        newest_dir = max(all_subdirs, key=str2ms)
+
+        # Devolvemos el timestamp del directorio más reciente
+        return datetime.fromtimestamp(str2ms(newest_dir))
+    except FileNotFoundError:
         return None
-
-    last_time = os.path.getmtime(f'{attachmentsDir}/{all_subdirs[0]}')
-    for dir in all_subdirs:
-        time = os.path.getmtime(f'{attachmentsDir}/{dir}')
-        if time > last_time:
-            last_time = time
-    return datetime.fromtimestamp(last_time)
 
 
 main()
