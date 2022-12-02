@@ -27,8 +27,14 @@ def main():
     if last_time != None:
         filterRecivedTime = last_time.strftime(
             '%Y-%m-%dT%H:%M:%SZ')
-        print(f"Recuperando archivos adjuntos desde {filterRecivedTime}")
+    else:
+        if config["emailsAfterDate"]:
+            emailsAfterDate = datetime.strptime(
+                config["emailsAfterDate"], "%d/%m/%Y %H:%M:%S")
+            filterRecivedTime = emailsAfterDate.strftime('%Y-%m-%dT%H:%M:%SZ')
 
+    if filterRecivedTime:
+        print(f"Recuperando archivos adjuntos desde {filterRecivedTime}")
     else:
         print(f"Recuperando archivos adjuntos desde el principio")
 
