@@ -39,7 +39,21 @@ def main():
         print(f"Recuperando archivos adjuntos desde el principio")
 
     # Obtenemos el id de los correos que tengan archivos adjuntos
-    emails = graph.get_emails_with_attachments(filterRecivedTime)
+    emails = graph.get_emails_with_attachments(
+        filterRecivedTime, config["fromAddress"])
+
+    if config["receiversAddresses"]:
+        # Descarta aquellos correos que no contengan los receptores indicados en el config
+        emails_filtred_by_recipients = []
+        for email in emails["value"]:
+            email_recipients = []
+            for recipient_obj in email["toRecipients"]:
+                email_recipients.append(
+                    recipient_obj["emailAddress"]["address"])
+            if all(recipient in email_recipients for recipient in config["receiversAddresses"]):
+                emails_filtred_by_recipients.append(email)
+
+        emails = emails_filtred_by_recipients
 
     if len(emails) == 0:
         print("No hay correos con archivos adjuntos nuevos.")
