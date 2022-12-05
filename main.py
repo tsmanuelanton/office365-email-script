@@ -16,7 +16,7 @@ attachmentsDir = config["attachmentsDir"]
 
 def main():
     # Autenticar usuario
-    graph.initialize_graph_for_user_auth(config)
+    graph.initialize_graph_for_user_auth(config["azure"])
 
     # Obtenemos, si existe la fecha de la última ejecución
     last_time = get_last_time_executed()
@@ -28,9 +28,9 @@ def main():
         filterRecivedTime = last_time.strftime(
             '%Y-%m-%dT%H:%M:%SZ')
     else:
-        if config["emailsAfterDate"]:
+        if config["filters"]["emailsAfterDate"]:
             emailsAfterDate = datetime.strptime(
-                config["emailsAfterDate"], "%d/%m/%Y %H:%M:%S")
+                config["filters"]["emailsAfterDate"], "%d/%m/%Y %H:%M:%S")
             filterRecivedTime = emailsAfterDate.strftime('%Y-%m-%dT%H:%M:%SZ')
 
     if filterRecivedTime:
@@ -40,9 +40,9 @@ def main():
 
     # Obtenemos el id de los correos que tengan archivos adjuntos
     emails = graph.get_emails_with_attachments(
-        filterRecivedTime, config["fromAddress"])
+        filterRecivedTime, config["filters"]["fromAddress"])
 
-    if config["receiversAddresses"]:
+    if len(emails["value"]) != 0 and config["filters"]["receiversAddresses"]:
         # Descarta aquellos correos que no contengan los receptores indicados en el config
         emails_filtred_by_recipients = []
         for email in emails["value"]:
@@ -50,7 +50,7 @@ def main():
             for recipient_obj in email["toRecipients"]:
                 email_recipients.append(
                     recipient_obj["emailAddress"]["address"])
-            if all(recipient in email_recipients for recipient in config["receiversAddresses"]):
+            if all(recipient in email_recipients for recipient in config["filters"]["receiversAddresses"]):
                 emails_filtred_by_recipients.append(email)
 
         emails = emails_filtred_by_recipients
@@ -66,7 +66,7 @@ def main():
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
 
-    for email in emails["value"]:
+    for email in emails:
         # Recuperamos los adjuntos del email
         attachments = graph.get_attchments(email["id"])
         for attachment in attachments["value"]:

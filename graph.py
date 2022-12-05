@@ -24,11 +24,9 @@ def get_emails_with_attachments(filterRecivedTime, fromAddressFilter):
     filter = "hasAttachments eq true"
 
     if filterRecivedTime:
-        filter += f"receivedDateTime ge {filterRecivedTime}"
-        if fromAddressFilter:
-            filter += " AND "
+        filter += f" AND receivedDateTime ge {filterRecivedTime}"
     if fromAddressFilter:
-        filter += f"(from/emailAddress/address) eq '{fromAddressFilter}'"
+        filter += f" AND (from/emailAddress/address) eq '{fromAddressFilter}'"
 
     # Obtenemos los campos id y los receptores del correo
     select = 'id, toRecipients'
