@@ -11,7 +11,11 @@ except FileNotFoundError as e:
     print("Falta el archivo de configuración")
     exit(-1)
 
-attachmentsDir = config["attachmentsDir"]
+attachmentsDir = config.get("attachmentsDir")
+if not attachmentsDir:
+    print("Falta definir \"attachmentsDir\" en config.json: " +
+          "Hay que especificar la ubicación para los archivos adjuntos.")
+    exit(-1)
 
 
 def main():
@@ -40,12 +44,12 @@ def main():
 
     # Obtenemos el id de los correos que tengan archivos adjuntos
     emails = graph.get_emails_with_attachments(
-        filterRecivedTime, config["filters"]["fromAddress"])
+        filterRecivedTime, config["filters"]["fromAddress"])["value"]
 
-    if len(emails["value"]) != 0 and config["filters"]["receiversAddresses"]:
+    if len(emails) != 0 and config.get("filters").get("receiversAddresses"):
         # Descarta aquellos correos que no contengan los receptores indicados en el config
         emails_filtred_by_recipients = []
-        for email in emails["value"]:
+        for email in emails:
             email_recipients = []
             for recipient_obj in email["toRecipients"]:
                 email_recipients.append(

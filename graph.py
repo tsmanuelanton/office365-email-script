@@ -1,20 +1,19 @@
 import sys
-from azure.identity import DeviceCodeCredential
+from azure.identity import UsernamePasswordCredential
 from msgraph.core import GraphClient
 
 this = sys.modules[__name__]
 
 
 def initialize_graph_for_user_auth(config):
-    this.settings = config
-    client_id = this.settings['clientId']
-    tenant_id = this.settings['authTenant']
-    graph_scopes = this.settings['graphUserScopes'].split(' ')
+    client_id = config['clientId']
+    username = config['username']
+    password = config['password']
 
-    this.device_code_credential = DeviceCodeCredential(
-        client_id, tenant_id=tenant_id)
+    this.device_code_credential = UsernamePasswordCredential(client_id,
+                                                             username, password)
     this.user_client = GraphClient(
-        credential=this.device_code_credential, scopes=graph_scopes)
+        credential=this.device_code_credential, scopes=["mail.read"])
 
 
 def get_emails_with_attachments(filterRecivedTime, fromAddressFilter):

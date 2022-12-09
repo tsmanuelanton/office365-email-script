@@ -1,0 +1,13 @@
+{
+    "azure": {
+        "clientId": "",
+        "username": "",
+        "password": ""
+    },
+    "attachmentsDir": "",
+    "filters": {
+        "emailsAfterDate": "",
+        "fromAddress": "",
+        "receiversAddresses": []
+    }
+}
