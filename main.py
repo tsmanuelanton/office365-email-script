@@ -7,7 +7,9 @@ import os
 from pathlib import Path
 
 try:
-    config = json.load(open("config.json", "r"))
+    parent_directory = Path(__file__).parent.resolve()
+    config_file_path = Path(f"{parent_directory}/config.json")
+    config = json.load(open(config_file_path, "r"))
 except FileNotFoundError as e:
     print("Falta el archivo de configuración")
     exit(-1)
@@ -66,7 +68,7 @@ def main():
         return
 
     # Creamos el directorio donde se van a almacenar los archivos adjuntos
-    now = datetime.now()
+    now = datetime.utcnow()
     date_time = now.strftime("%d-%m-%Y_%H-%M")
     directory_path = Path(f"{attachmentsDir}/{date_time}")
     if not os.path.exists(directory_path):
