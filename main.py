@@ -4,6 +4,7 @@ import json
 import base64
 from datetime import datetime
 import os
+from pathlib import Path
 
 try:
     config = json.load(open("config.json", "r"))
@@ -66,7 +67,7 @@ def main():
     # Creamos el directorio donde se van a almacenar los archivos adjuntos
     now = datetime.now()
     date_time = now.strftime("%d-%m-%Y_%H-%M")
-    directory_path = f"{attachmentsDir}\\{date_time}"
+    directory_path = Path(f"{attachmentsDir}/{date_time}")
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
 
@@ -77,7 +78,7 @@ def main():
             # Si no es un archivo (fileAttachment), lo ignormaos
             if attachment["@odata.type"] == "#microsoft.graph.fileAttachment":
                 file_name = f'{attachment["name"]}'
-                f = open(f"{directory_path}\\{file_name}", "wb")
+                f = open(Path(f"{directory_path}/{file_name}"), "wb")
                 data_base64 = attachment["contentBytes"]
                 f.write(base64.b64decode(data_base64))
                 f.close()
@@ -89,7 +90,7 @@ def get_last_time_executed():
     try:
         # Recupera todos los subdirectorios donde almacenamos los archivos adjuntos
         all_subdirs = [d for d in os.listdir(
-            attachmentsDir) if os.path.isdir(f'{attachmentsDir}\\{d}')]
+            attachmentsDir) if os.path.isdir(Path(f'{attachmentsDir}/{d}'))]
 
         if len(all_subdirs) == 0:
             return None
