@@ -6,7 +6,7 @@ Script se conecta a un buzón de correos de Office 365, recupera correos filtrad
 
 El script usa la [API Microsoft Graph](https://learn.microsoft.com/es-es/graph/overview) para acceder a los correos del usuario. Para usar la aplacaión hay que seguir los siguientes pasos:
 
-1. __Registrar la apliación__: Nuestra aplicación necesita estar registrada para poder usar la API de Microsoft. Para ello, si somos administradores de nuestra cuenta de Microsoft, accedemos a Azure Active Directory en el [panel de Azure](https://portal.azure.com/?feature.msaljs=false#home) y seleccionamos en __Administrar->Registros de apliaciones__ y, en la nueva ventana le asignamos el nombre que más nos convenga y finalmente, pulsamos en "Registrar".
+1. __Registrar la apliación__: Nuestra aplicación necesita estar registrada para poder usar la API de Microsoft. Para ello, si somos administradores de nuestra cuenta de Microsoft, accedemos a Azure Active Directory en el [panel de Azure](https://portal.azure.com/?feature.msaljs=false#home) y seleccionamos en __Administrar->Registros de apliaciones__ y, en la nueva ventana le asignamos el nombre que más nos convenga y finalmente, pulsamos en "Registrar". _Si no somos administradores saltar a la sección [Inicio rápido](#inicio-rápido)_
 
     <p align="center">
     <img src="assets/registrar_app.gif" alt="Pasos para registrar la apliación">
@@ -42,7 +42,27 @@ Para este proyecto necesitamos python3.6 o superior.
 - Instalamos las dependencias
     `pip install -r requirements.txt`
 
-- Antes de iniciar el script hay que definir en el archivo de configuración las credenciales de la app (client_id), usario y contraseña de la cuenta para acceder a su buzón y también un directorio donde guardar los archivos adjuntos (attachmentsDir).
+- Antes de iniciar el script hay que poner los [ajustes en "config.json"](#configuración)
 
 - Iniciamos el script.
 `python main.py`
+
+# Configuración
+Antes de iniciar el script hay que poner la configuración el archivo "config.json":
+```
+{
+    "azure": {
+        "clientId": ID de la apliación obtenido al registrar la app en Azure Active Directory.
+        "username": Correo del buzón que queremos acceder.
+        "password": Contraseña del buzón.
+    },
+    "attachmentsDir": Ruta con el formato de UNIX donde guardar los archivos adjuntos.
+
+    #Sección opcional
+    "filters": {
+        "emailsAfterDate": Fecha con formato Y-m-dTH:M:SZ para obtener los correos a partir de esta fecha.
+        "fromAddress": Filtrar los correos enviados desde este buzón.
+        "receiversAddresses": Filtrar los correos recibidos por estos buzones.
+    }
+}
+```

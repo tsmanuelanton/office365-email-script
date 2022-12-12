@@ -33,7 +33,7 @@ def main():
         filterRecivedTime = last_time.strftime(
             '%Y-%m-%dT%H:%M:%SZ')
     else:
-        if config["filters"]["emailsAfterDate"]:
+        if config.get("filters").get("emailsAfterDate"):
             emailsAfterDate = datetime.strptime(
                 config["filters"]["emailsAfterDate"], "%d/%m/%Y %H:%M:%S")
             filterRecivedTime = emailsAfterDate.strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -44,8 +44,9 @@ def main():
         print(f"Recuperando archivos adjuntos desde el principio")
 
     # Obtenemos el id de los correos que tengan archivos adjuntos
+    fromAddres = config.get("filters").get("fromAddress")
     emails = graph.get_emails_with_attachments(
-        filterRecivedTime, config["filters"]["fromAddress"])["value"]
+        filterRecivedTime, fromAddres)["value"]
 
     if len(emails) != 0 and config.get("filters").get("receiversAddresses"):
         # Descarta aquellos correos que no contengan los receptores indicados en el config
