@@ -5,19 +5,28 @@ import base64
 from datetime import datetime
 import os
 from pathlib import Path
+import logging
+
+# Creando un logger personalizado
+logger = logging.getLogger("office365-email-script")
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+c_handler = logging.StreamHandler()
+c_handler.setFormatter(formatter)
+logger.addHandler(c_handler)
 
 try:
     parent_directory = Path(__file__).parent.resolve()
     config_file_path = Path(f"{parent_directory}/config.json")
     config = json.load(open(config_file_path, "r"))
 except FileNotFoundError as e:
-    print("Falta el archivo de configuración")
+    logger.error("Falta el archivo de configuración.")
     exit(-1)
 
 attachmentsDir = config.get("attachmentsDir")
 if not attachmentsDir:
-    print("Falta definir \"attachmentsDir\" en config.json: " +
-          "Hay que especificar la ubicación para los archivos adjuntos.")
+    logger.error("Falta definir \"attachmentsDir\" en config.json: " +
+                 "Hay que especificar la ubicación para los archivos adjuntos.")
     exit(-1)
 
 
@@ -40,10 +49,8 @@ def main():
                 config["filters"]["emailsAfterDate"], "%d/%m/%Y %H:%M:%S")
             filterRecivedTime = emailsAfterDate.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    if filterRecivedTime:
-        print(f"Recuperando archivos adjuntos desde {filterRecivedTime}")
-    else:
-        print(f"Recuperando archivos adjuntos desde el principio")
+    logger.info(
+        f'Recuperando archivos adjuntos desde {filterRecivedTime if filterRecivedTime else "el principio"}.')
 
     # Obtenemos el id de los correos que tengan archivos adjuntos
     fromAddres = config.get("filters").get("fromAddress")
@@ -64,7 +71,7 @@ def main():
         emails = emails_filtred_by_recipients
 
     if len(emails) == 0:
-        print("No hay correos con archivos adjuntos nuevos.")
+        logger.info("No hay correos con archivos adjuntos nuevos.")
         return
 
     # Creamos el directorio donde se van a almacenar los archivos adjuntos
@@ -72,8 +79,11 @@ def main():
     date_time = now.strftime("%d-%m-%Y_%H-%M")
     directory_path = Path(f"{attachmentsDir}/{date_time}")
     if not os.path.exists(directory_path):
+        logger.debug(
+            f"Creando directorio para almacenar archivos adjuntos en {directory_path}")
         os.makedirs(directory_path)
 
+    n_attachments_saved = 0
     for email in emails:
         # Recuperamos los adjuntos del email
         attachments = graph.get_attchments(email["id"])
@@ -85,6 +95,10 @@ def main():
                 data_base64 = attachment["contentBytes"]
                 f.write(base64.b64decode(data_base64))
                 f.close()
+                n_attachments_saved += 1
+
+    logger.info(
+        f"Almacenados {n_attachments_saved} archivos en {directory_path}.")
 
 
 def get_last_time_executed():
@@ -111,4 +125,10 @@ def get_last_time_executed():
         return None
 
 
-main()
+try:
+    logger.info("Inicio ejecución script.")
+    main()
+except BaseException as e:
+    logger.error(f"Se ha producido un error: {e}")
+
+logger.info("Fin ejecución script.")
