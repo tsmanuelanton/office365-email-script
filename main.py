@@ -10,7 +10,8 @@ import logging
 # Creando un logger personalizado
 logger = logging.getLogger("office365-email-script")
 logger.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter(
+    '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s')
 c_handler = logging.StreamHandler()
 c_handler.setFormatter(formatter)
 logger.addHandler(c_handler)
@@ -52,7 +53,7 @@ def main():
     logger.info(
         f'Recuperando archivos adjuntos desde {filterRecivedTime if filterRecivedTime else "el principio"}.')
 
-    # Obtenemos el id de los correos que tengan archivos adjuntos
+    # Obtenemos el id de los correos que tienen archivos adjuntos
     fromAddres = config.get("filters").get("fromAddress")
     emails = graph.get_emails_with_attachments(
         filterRecivedTime, fromAddres)
@@ -65,16 +66,8 @@ def main():
 
     if len(emails) != 0 and config.get("filters").get("receiversAddresses"):
         # Descarta aquellos correos que no contengan los receptores indicados en el config
-        emails_filtred_by_recipients = []
-        for email in emails:
-            email_recipients = []
-            for recipient_obj in email["toRecipients"]:
-                email_recipients.append(
-                    recipient_obj["emailAddress"]["address"])
-            if all(recipient in email_recipients for recipient in config["filters"]["receiversAddresses"]):
-                emails_filtred_by_recipients.append(email)
-
-        emails = emails_filtred_by_recipients
+        emails = get_emails_filtred(
+            emails, config["filters"]["receiversAddresses"])
 
     if len(emails) == 0:
         logger.info("No hay correos con archivos adjuntos nuevos.")
@@ -89,25 +82,8 @@ def main():
             f"Creando directorio para almacenar archivos adjuntos en {directory_path}")
         os.makedirs(directory_path)
 
-    n_attachments_saved = 0
-    for email in emails:
-        # Recuperamos los adjuntos del email
-        attachments = graph.get_attchments(email["id"])
-        if emails.get("error"):
-            error_msg = attachments.get("error").get("message")
-            logger.error(f"Se ha producido un error: {error_msg}")
-            return -1
-        emails = emails["value"]
-        for attachment in attachments["value"]:
-            # Si no es un archivo (fileAttachment), lo ignormaos
-            if attachment["@odata.type"] == "#microsoft.graph.fileAttachment":
-                file_name = f'{attachment["name"]}'
-                f = open(Path(f"{directory_path}/{file_name}"), "wb")
-                data_base64 = attachment["contentBytes"]
-                f.write(base64.b64decode(data_base64))
-                f.close()
-                n_attachments_saved += 1
-
+    # Almacenamos los archivos adjuntos
+    n_attachments_saved = save_attachments(emails, directory_path)
     logger.info(
         f"Almacenados {n_attachments_saved} archivos en {directory_path}.")
 
@@ -124,7 +100,7 @@ def get_last_time_executed():
             return None
 
         def str2ms(str):
-            '''Función auxiliar que convierte una fecha en str a mirosegundos'''
+            '''Función auxiliar que convierte una fecha en str a microsegundos'''
             return datetime.strptime(str, '%d-%m-%Y_%H-%M').timestamp()
 
         # Recorremos todos los subdirectorios buscando la carpeta más reciente
@@ -136,10 +112,47 @@ def get_last_time_executed():
         return None
 
 
+def get_emails_filtred(emails, recipent_filter):
+    # Descarta aquellos correos que no contengan los receptores indicados en el config
+    emails_filtred_by_recipients = []
+    for email in emails:
+        email_recipients = []
+        for recipient_obj in email["toRecipients"]:
+            email_recipients.append(
+                recipient_obj["emailAddress"]["address"])
+        if all(recipient in email_recipients for recipient in recipent_filter):
+            emails_filtred_by_recipients.append(email)
+
+    return emails_filtred_by_recipients
+
+
+def save_attachments(emails, directory_path):
+    n_attachments_saved = 0
+
+    for email in emails:
+        # Recuperamos los adjuntos del email
+        attachments = graph.get_attchments(email["id"])
+        if attachments.get("error"):
+            error_msg = attachments.get("error").get("message")
+            logger.error(f"Se ha producido un error: {error_msg}")
+            return -1
+        for attachment in attachments["value"]:
+            # Si no es un archivo (fileAttachment), lo ignormaos
+            if attachment["@odata.type"] == "#microsoft.graph.fileAttachment":
+                file_name = f'{attachment["name"]}'
+                data_base64 = attachment["contentBytes"]
+                f = open(Path(f"{directory_path}/{file_name}"), "wb")
+                f.write(base64.b64decode(data_base64))
+                f.close()
+                n_attachments_saved += 1
+
+    return n_attachments_saved
+
+
 try:
     logger.info("Inicio ejecución script.")
     main()
 except BaseException as e:
-    logger.error(f"Se ha producido un error: {e}")
+    logger.exception(f"Se ha producido un error: {e}")
 
 logger.info("Fin ejecución script.")
