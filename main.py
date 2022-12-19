@@ -1,3 +1,9 @@
+# Script que se conecta a un buzón de Office 365 y descarga los archivos adjuntos.
+# Autores:
+#   * Tsegan Manuel Antón de la Calle - manuel.anton@satec.es
+#   * Patricia Vázquez González       - patricia.vazquez@satec-es.com
+# 19/12/2022 v1
+
 
 import graph
 import json
