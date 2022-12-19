@@ -55,7 +55,13 @@ def main():
     # Obtenemos el id de los correos que tengan archivos adjuntos
     fromAddres = config.get("filters").get("fromAddress")
     emails = graph.get_emails_with_attachments(
-        filterRecivedTime, fromAddres)["value"]
+        filterRecivedTime, fromAddres)
+
+    if emails.get("error"):
+        error_msg = emails.get("error").get("message")
+        logger.error(f"Se ha producido un error: {error_msg}")
+        return -1
+    emails = emails["value"]
 
     if len(emails) != 0 and config.get("filters").get("receiversAddresses"):
         # Descarta aquellos correos que no contengan los receptores indicados en el config
@@ -87,6 +93,11 @@ def main():
     for email in emails:
         # Recuperamos los adjuntos del email
         attachments = graph.get_attchments(email["id"])
+        if emails.get("error"):
+            error_msg = attachments.get("error").get("message")
+            logger.error(f"Se ha producido un error: {error_msg}")
+            return -1
+        emails = emails["value"]
         for attachment in attachments["value"]:
             # Si no es un archivo (fileAttachment), lo ignormaos
             if attachment["@odata.type"] == "#microsoft.graph.fileAttachment":
