@@ -12,13 +12,14 @@ from datetime import datetime
 import os
 from pathlib import Path
 import logging
+import sys
 
 # Creando un logger personalizado
 logger = logging.getLogger("office365-email-script")
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter(
     '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s')
-c_handler = logging.StreamHandler()
+c_handler = logging.StreamHandler(sys.stdout)
 c_handler.setFormatter(formatter)
 logger.addHandler(c_handler)
 
